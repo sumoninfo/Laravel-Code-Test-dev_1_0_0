@@ -2,18 +2,17 @@
 
 namespace Bulkly\Http\Controllers;
 
+use App\Http\Controllers\Input;
+use Bulkly\BufferPosting;
+use Bulkly\Plan;
+use Bulkly\SocialAccounts;
+use Bulkly\SocialPostGroups;
+use Bulkly\User;
+use DB;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Mail;
-use Bulkly\User;
-use Bulkly\Plan;
-use Bulkly\SocialPostGroups;
-use Bulkly\SocialAccounts;
-use Bulkly\BufferPosting;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use DB;
-use App\Http\Controllers\Input;
 
 class PagesController extends Controller
 {
@@ -117,17 +116,21 @@ class PagesController extends Controller
 
     public function searchData(Request $request)
     {
+        $keywords = $request->keywords;
+        $group_filter = $request->group_filter;
         $date = date("Y-m-d", strtotime($request->date_search));
         $data = BufferPosting::with('group', 'account')
             ->where('post_text', 'like', "%$request->keywords%")
-            ->where('created_at', 'like', "%$date%")
+//            ->orWhere('created_at', 'like', "%$date%")
             ->whereHas('group', function ($query) use ($request) {
                 $query->where('type', 'like', "%{$request->group_filter}%");
             })
-
-//            ->where('type', 'LIKE', "%$request->group_filter%")
             ->paginate(15);
 
+//             ->orWhere(function ($query) use ($date, $keywords) {
+//                $query->where('created_at', 'like', '%' . $date . '%')
+//                    ->where('post_text', 'like', "%$keywords%");
+//            })
         return response()->json($data);
 
     }
